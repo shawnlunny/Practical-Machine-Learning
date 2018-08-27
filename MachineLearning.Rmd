@@ -1,0 +1,197 @@
+---
+title: "Machine Learning"
+author: "Shawn"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+
+Synopsis: This research is to predict whether or not 6 users wearing personal exercise tracking bracelets are correctly doing the exercise. We will attempt to create a predictive model that can correctly classify the results.
+
+##Load Data
+
+```{r file_load, cache=TRUE}
+
+if(!file.exists("Exercise_Training_Data.csv")){
+  download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "Exercise_Training_Data.csv")
+}
+
+if(!file.exists("Exercise_Testing_Data.csv")){
+  download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", "Exercise_Testing_Data.csv")
+}
+
+#Make sure empty strings are marked as NA since we will remove them later
+training <- read.csv(file="Exercise_Training_Data.csv", na.strings = c("NA",""))
+testing <- read.csv(file="Exercise_Testing_Data.csv", na.strings = c("NA",""))
+
+```
+
+##Data Cleaning & Exploratory Analysis
+
+```{r explore, cache=TRUE}
+
+#Do some initial analysis on the data
+dim(training)
+str(training)
+
+#Get rid of any columns with NA's or else the training will fail with an error
+training <- training[ ,!apply(is.na(training), 2, any)]
+#Realized there was some user data (names & timestamps) that was being used by the model and was extremely overfitting the model to 1, so remove that data as it should not be measured
+training <- training[, -c(1:7)]
+dim(training)
+
+#Get rid of any columns with NA's or else the testing will fail with an error
+testing <- testing[ ,!apply(is.na(testing), 2, any)]
+#Realized there was some user data (names & timestamps) that was being used by the model and was extremely overfitting the model to 1, so remove that data as it should not be measured
+testing <- testing[, -c(1:7)]
+dim(testing)
+
+#We have 5 unique exercises
+unique(training$classe)
+
+```
+
+After adjusting for NA's we lose around 6,000 rows and have removed 7 unneeded columns. We can now move on to modeling.
+
+##Modeling
+
+Let's try three different modeling techniques to see which one is the most accurate. We will use a 5 fold fit for cross-validation purposes.
+
+```{r prep, cache=TRUE}
+
+library(caret)
+set.seed(487)
+
+#Prefer to use 70/30 split on data so as to not overfit
+part <- createDataPartition(training$classe, p = 0.7, list = FALSE)
+train <- training[part, ]
+test <- training[-part, ]
+
+#Run time was terrible, so found some instructions here on making it perform much faster
+#https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md
+
+library(parallel)
+library(doParallel)
+#convention to leave 1 core for OS
+cluster <- makeCluster(detectCores() - 1)
+registerDoParallel(cluster)
+
+#Use 5 folds
+fit <- trainControl(method="cv", number=5, allowParallel=TRUE)
+
+```
+
+##Random Forest
+
+```{r random_forest_1, cache=TRUE}
+
+rf_model <- train(classe ~ ., method="rf", data=train, trControl=fit, verbose=FALSE)
+plot(rf_model)
+
+```
+
+We can see that between 2 and 27 random predictors, that the accuracy is better than 99%, but as more are introduced the accuracy falls slightly to 98%. This may suggest that many of the predictors have strong dependencies between each other.
+
+```{r random_forest_2, cache=TRUE}
+
+rf_predict <- predict(rf_model, newdata=test)
+rf_matrix <- confusionMatrix(rf_predict, test$classe)
+rf_matrix$overall["Accuracy"]
+
+rf_matrix$table
+
+```
+
+We can see that we get a 99.4% accuracy, and that the matrix table verifies this with the handful of overfitted values in each category.
+
+##Gradient Boosting Method (GBM)
+
+```{r gradient_boosting_1, cache=TRUE}
+
+gbm_model <- train(classe ~ ., method="gbm", data=train, trControl=fit, verbose=FALSE)
+plot(gbm_model)
+
+```
+
+We can see that after just 3 levels of decision trees our accuracy is 96%. We can also see that after 100 iteractions the data accuracy grows slowly. Once again this would seem to validate our earlier assumption that the variables are highly dependent on each other.
+
+```{r gradient_boosting_method_2, cache=TRUE}
+gbm_predict <- predict(gbm_model, newdata=test)
+gbm_matrix <- confusionMatrix(gbm_predict, test$classe)
+gbm_matrix$overall["Accuracy"]
+gbm_matrix$table
+
+```
+
+We confirm the accuracy is 96%, and can also see by the gmb table that most of the data fits nicely.
+
+##Linear Discriminant Analysis (LDA)
+
+```{r linear_discriminant_1, cache=TRUE}
+
+lda_model <- train(classe ~ ., method="lda2", data=train, trControl=fit, verbose=FALSE)
+plot(lda_model)
+
+```
+
+It is clear from the plot that lda's accuracy is low as it tries to maximize variable seperation but cannot.
+
+```{r linear_discriminant_2, cache=TRUE}
+
+lda_predict <- predict(lda_model, newdata=test)
+lda_matrix <- confusionMatrix(lda_predict, test$classe)
+lda_matrix$overall["Accuracy"]
+lda_matrix$table
+
+```
+
+At 69% it is the worst of all the models. The lda table shows how much 
+
+##Combine All Models
+
+It doesn't appear like we can get a better outcome than random forest, but let's see.
+
+```{r combined, cache=TRUE}
+
+combine <- data.frame(rf_predict, gbm_predict, lda_predict, classe = test$classe)
+combine_model <- train(classe ~ ., method = "rf", data = combine)
+combine_predict <- predict(combine_model, newdata=combine)
+combine_matrix <- confusionMatrix(combine_predict, test$classe)
+combine_matrix$overall["Accuracy"]
+
+```
+
+As we predicted we were only able to match the best accuracy of random forest.
+
+```{r cleanup, cache=TRUE, echo=FALSE}
+
+#Deregister parallel processing
+stopCluster(cluster)
+registerDoSEQ()
+
+```
+
+##Analysis
+
+RF: **Best** with 99% coverage, with a 1% out-of-sample error.
+
+GBM: 96% coverage, with a 4% out-of-sample error. 
+
+LDA: **Worst** with 69% coverage, but with a 30% out-of-sample error. This could be accounted for by the strong correlation of the variables that cannot be seperated by LDA.
+
+##Final Prediction Analysis
+
+Predict the outcome on our large testing set for the 20 quiz questions.
+
+```{r final_prediction, cache=TRUE}
+
+final_predict <- predict(rf_model, newdata=testing)
+final_predict
+  
+```

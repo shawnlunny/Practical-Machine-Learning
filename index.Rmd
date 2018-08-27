@@ -2,7 +2,8 @@
 title: "Machine Learning"
 author: "Shawn"
 output:
-  html_document: default
+  html_document: 
+    keep_md: yes
   pdf_document: default
 ---
 

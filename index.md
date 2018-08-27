@@ -271,7 +271,7 @@ plot(gbm_model)
 
 ![](index_files/figure-html/gradient_boosting_1-1.png)<!-- -->
 
-We can see that after just 3 levels of decision trees our accuracy is 96%. We can also see that after 100 iteractions the data accuracy grows slowly. Once again this would seem to validate our earlier assumption that the variables are highly dependent on each other.
+We can see that after just 3 levels of decision trees our accuracy is 96%. We can also see that after 100 iterations the data accuracy grows slowly. Once again this would seem to validate our earlier assumption that the variables are highly dependent on each other.
 
 
 ```r

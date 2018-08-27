@@ -13,7 +13,7 @@ output:
 
 Synopsis: This research is to predict whether or not 6 users wearing personal exercise tracking bracelets are correctly doing the exercise. We will attempt to create a predictive model that can correctly classify the results.
 
-##Load Data
+## Load Data
 
 
 ```r
@@ -30,7 +30,7 @@ training <- read.csv(file="Exercise_Training_Data.csv", na.strings = c("NA",""))
 testing <- read.csv(file="Exercise_Testing_Data.csv", na.strings = c("NA",""))
 ```
 
-##Data Cleaning & Exploratory Analysis
+## Data Cleaning & Exploratory Analysis
 
 
 ```r
@@ -186,7 +186,7 @@ unique(training$classe)
 
 After adjusting for NA's we lose around 6,000 rows and have removed 7 unneeded columns. We can now move on to modeling.
 
-##Modeling
+## Modeling
 
 Let's try three different modeling techniques to see which one is the most accurate. We will use a 5 fold fit for cross-validation purposes.
 
@@ -235,7 +235,7 @@ registerDoParallel(cluster)
 fit <- trainControl(method="cv", number=5, allowParallel=TRUE)
 ```
 
-##Random Forest
+## Random Forest
 
 
 ```r
@@ -275,7 +275,7 @@ rf_matrix$table
 
 We can see that we get a 99.4% accuracy, and that the matrix table verifies this with the handful of overfitted values in each category.
 
-##Gradient Boosting Method (GBM)
+## Gradient Boosting Method (GBM)
 
 
 ```r
@@ -315,7 +315,7 @@ gbm_matrix$table
 
 We confirm the accuracy is 96%, and can also see by the gmb table that most of the data fits nicely.
 
-##Linear Discriminant Analysis (LDA)
+## Linear Discriminant Analysis (LDA)
 
 
 ```r
@@ -355,7 +355,7 @@ lda_matrix$table
 
 At 69% it is the worst of all the models. The lda table shows how much 
 
-##Combine All Models
+## Combine All Models
 
 It doesn't appear like we can get a better outcome than random forest, but let's see.
 
@@ -377,7 +377,7 @@ As we predicted we were only able to match the best accuracy of random forest.
 
 
 
-##Analysis
+## Analysis
 
 RF: **Best** with 99% coverage, with a 1% out-of-sample error.
 
@@ -385,7 +385,7 @@ GBM: 96% coverage, with a 4% out-of-sample error.
 
 LDA: **Worst** with 69% coverage, but with a 30% out-of-sample error. This could be accounted for by the strong correlation of the variables that cannot be seperated by LDA.
 
-##Final Prediction Analysis
+## Final Prediction Analysis
 
 Predict the outcome on our large testing set for the 20 quiz questions.
 

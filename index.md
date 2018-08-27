@@ -11,7 +11,15 @@ output:
 
 ## Synopsis
 
-Synopsis: This research is to predict whether or not 6 users wearing personal exercise tracking bracelets are correctly doing the exercise. We will attempt to create a predictive model that can correctly classify the results.
+This research is to predict whether or not six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: 
+
+1. Exactly according to the specification (Class A)
+2. Throwing the elbows to the front (Class B)
+3. Lifting the dumbbell only halfway (Class C)
+4. Lowering the dumbbell only halfway (Class D)
+5. Throwing the hips to the front (Class E).
+
+We will attempt to create a predictive model that can correctly classify the results.
 
 ## Load Data
 
@@ -193,20 +201,9 @@ Let's try three different modeling techniques to see which one is the most accur
 
 ```r
 library(caret)
-```
-
-```
-## Loading required package: lattice
-```
-
-```
-## Loading required package: ggplot2
-```
-
-```r
 set.seed(487)
 
-#Prefer to use 70/30 split on data so as to not overfit
+#Prefer to use 70/30 split on data so as to prevent overfit
 part <- createDataPartition(training$classe, p = 0.7, list = FALSE)
 train <- training[part, ]
 test <- training[-part, ]
@@ -216,17 +213,6 @@ test <- training[-part, ]
 
 library(parallel)
 library(doParallel)
-```
-
-```
-## Loading required package: foreach
-```
-
-```
-## Loading required package: iterators
-```
-
-```r
 #convention to leave 1 core for OS
 cluster <- makeCluster(detectCores() - 1)
 registerDoParallel(cluster)
@@ -325,7 +311,7 @@ plot(lda_model)
 
 ![](index_files/figure-html/linear_discriminant_1-1.png)<!-- -->
 
-It is clear from the plot that lda's accuracy is low as it tries to maximize variable seperation but cannot.
+It is clear from the plot that lda's accuracy is low as it tries to maximize variable seperation but cannot, probably due to the similar movement in the different exercises, but with only slight variations.
 
 
 ```r
@@ -353,7 +339,7 @@ lda_matrix$table
 ##          E    6   52   29   42  650
 ```
 
-At 69% it is the worst of all the models. The lda table shows how much 
+At 69% it is the worst of all the models. With an out-of-sample error rate of nearly 31% it is an unreliable model.
 
 ## Combine All Models
 

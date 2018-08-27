@@ -129,7 +129,15 @@ $(document).ready(function () {
 
 <div id="synopsis" class="section level2">
 <h2>Synopsis</h2>
-<p>Synopsis: This research is to predict whether or not 6 users wearing personal exercise tracking bracelets are correctly doing the exercise. We will attempt to create a predictive model that can correctly classify the results.</p>
+<p>This research is to predict whether or not six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions:</p>
+<ol style="list-style-type: decimal">
+<li>Exactly according to the specification (Class A)</li>
+<li>Throwing the elbows to the front (Class B)</li>
+<li>Lifting the dumbbell only halfway (Class C)</li>
+<li>Lowering the dumbbell only halfway (Class D)</li>
+<li>Throwing the hips to the front (Class E).</li>
+</ol>
+<p>We will attempt to create a predictive model that can correctly classify the results.</p>
 </div>
 <div id="load-data" class="section level2">
 <h2>Load Data</h2>
@@ -273,12 +281,10 @@ unique(training$classe)</code></pre>
 <div id="modeling" class="section level2">
 <h2>Modeling</h2>
 <p>Let’s try three different modeling techniques to see which one is the most accurate. We will use a 5 fold fit for cross-validation purposes.</p>
-<pre class="r"><code>library(caret)</code></pre>
-<pre><code>## Loading required package: lattice</code></pre>
-<pre><code>## Loading required package: ggplot2</code></pre>
-<pre class="r"><code>set.seed(487)
+<pre class="r"><code>library(caret)
+set.seed(487)
 
-#Prefer to use 70/30 split on data so as to not overfit
+#Prefer to use 70/30 split on data so as to prevent overfit
 part &lt;- createDataPartition(training$classe, p = 0.7, list = FALSE)
 train &lt;- training[part, ]
 test &lt;- training[-part, ]
@@ -287,10 +293,8 @@ test &lt;- training[-part, ]
 #https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md
 
 library(parallel)
-library(doParallel)</code></pre>
-<pre><code>## Loading required package: foreach</code></pre>
-<pre><code>## Loading required package: iterators</code></pre>
-<pre class="r"><code>#convention to leave 1 core for OS
+library(doParallel)
+#convention to leave 1 core for OS
 cluster &lt;- makeCluster(detectCores() - 1)
 registerDoParallel(cluster)
 
@@ -344,7 +348,7 @@ gbm_matrix$overall[&quot;Accuracy&quot;]</code></pre>
 <pre class="r"><code>lda_model &lt;- train(classe ~ ., method=&quot;lda2&quot;, data=train, trControl=fit, verbose=FALSE)
 plot(lda_model)</code></pre>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
-<p>It is clear from the plot that lda’s accuracy is low as it tries to maximize variable seperation but cannot.</p>
+<p>It is clear from the plot that lda’s accuracy is low as it tries to maximize variable seperation but cannot, probably due to the similar movement in the different exercises, but with only slight variations.</p>
 <pre class="r"><code>lda_predict &lt;- predict(lda_model, newdata=test)
 lda_matrix &lt;- confusionMatrix(lda_predict, test$classe)
 lda_matrix$overall[&quot;Accuracy&quot;]</code></pre>
@@ -358,7 +362,7 @@ lda_matrix$overall[&quot;Accuracy&quot;]</code></pre>
 ##          C  157  144  658  111   82
 ##          D  134   37  138  715  110
 ##          E    6   52   29   42  650</code></pre>
-<p>At 69% it is the worst of all the models. The lda table shows how much</p>
+<p>At 69% it is the worst of all the models. With an out-of-sample error rate of nearly 31% it is an unreliable model.</p>
 </div>
 <div id="combine-all-models" class="section level2">
 <h2>Combine All Models</h2>
